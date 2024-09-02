@@ -11,12 +11,14 @@ import {
   ChartBarIcon,
   CogIcon,
   UserIcon,
+  ExclamationCircleIcon,
   UserCircleIcon, // アバター用のアイコンを追加
 } from "@heroicons/react/24/outline";
 
 const menuItems = [
   { name: "ダッシュボード", href: "/", icon: HomeIcon },
   { name: "患者一覧", href: "/patient", icon: UserGroupIcon },
+  { name: "予測離脱患者", href: "/at-risk-patients", icon: ExclamationCircleIcon },
   { name: "医師一覧", href: "/doctor", icon: UserIcon },
   { name: "予約管理", href: "/appointments", icon: CalendarIcon },
   { name: "統計", href: "/statistics", icon: ChartBarIcon },

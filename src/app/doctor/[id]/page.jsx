@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { doctors } from "@/data/doctors";
 import { patients } from "@/data/patients";
-import { UserIcon, StarIcon } from "@heroicons/react/24/solid";
+import { UserIcon, StarIcon, ExclamationCircleIcon } from "@heroicons/react/24/solid";
 
 export default function DoctorDetail() {
   const params = useParams();
@@ -16,11 +16,23 @@ export default function DoctorDetail() {
     return <div>医師が見つかりません</div>;
   }
 
-  // 平均患者継続率を計算 (仮のロジック)
+  // 平均患者継続率を計算
   const averageRetentionRate = ((doctorPatients.reduce((sum, patient) => sum + parseFloat(patient.revisitRate), 0) / doctorPatients.length) * 100).toFixed(1);
 
   // 患者満足度スコアを計算 (仮のロジック)
   const satisfactionScore = Math.floor(Math.random() * 31) + 70; // 70-100の範囲でランダムな値
+
+  // 予測離脱患者を抽出
+  const atRiskPatients = doctorPatients
+    .filter((patient) => patient.revisitRate < 0.3)
+    .sort((a, b) => a.revisitRate - b.revisitRate)
+    .slice(0, 10);
+
+  const getRevisitRateColor = (rate) => {
+    if (rate < 0.1) return "bg-red-600";
+    if (rate < 0.2) return "bg-orange-500";
+    return "bg-yellow-500";
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -93,7 +105,7 @@ export default function DoctorDetail() {
       </div>
 
       <h2 className="text-2xl font-bold mb-4">担当患者リスト</h2>
-      <div className="overflow-x-auto bg-white shadow-md rounded-lg">
+      <div className="overflow-x-auto bg-white shadow-md rounded-lg mb-8">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -121,6 +133,64 @@ export default function DoctorDetail() {
           </tbody>
         </table>
       </div>
+
+      <h2 className="text-2xl font-bold mb-4">予測離脱患者一覧（上位10名）</h2>
+      {atRiskPatients.length > 0 ? (
+        <div className="overflow-x-auto bg-white shadow-md rounded-lg">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名前</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">年齢</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">性別</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">最終来院日</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">再来院率</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">詳細</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {atRiskPatients.map((patient) => (
+                <tr key={patient.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-10 w-10">
+                        <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                          <span className="text-lg font-medium text-gray-700">{patient.name[0]}</span>
+                        </div>
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">{patient.name}</div>
+                        <div className="text-sm text-gray-500">{patient.gender}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.age}歳</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.gender}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.lastVisit}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="w-16 bg-gray-200 rounded-full h-2.5 mr-2">
+                        <div className={`h-2.5 rounded-full ${getRevisitRateColor(patient.revisitRate)}`} style={{ width: `${patient.revisitRate * 100}%` }}></div>
+                      </div>
+                      <span className="text-sm text-gray-500">{(patient.revisitRate * 100).toFixed(1)}%</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <Link href={`/patient/${patient.id}`} className="text-indigo-600 hover:text-indigo-900">
+                      詳細を見る
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="bg-white shadow-md rounded-lg p-6 text-center">
+          <ExclamationCircleIcon className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+          <p className="text-lg text-gray-700">該当患者がありません</p>
+        </div>
+      )}
     </div>
   );
 }
